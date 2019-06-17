@@ -20,6 +20,7 @@ public class Q5_22 {
         System.out.println("Payment#    Interest    Principal    Balance");
 
         AmortizationSchedule.out(loanAmount, numYears, monthlyInterestRate);
+        input.close();
     }
 }
 

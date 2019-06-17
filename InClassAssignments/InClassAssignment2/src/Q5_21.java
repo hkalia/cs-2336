@@ -10,6 +10,7 @@ public class Q5_21 {
         int numYears = input.nextInt();
         System.out.println("Interest Rate    Monthly Payment    Total Payment");
         CompareLoan.out(loanAmount, numYears);
+        input.close();
     }
 }
 
