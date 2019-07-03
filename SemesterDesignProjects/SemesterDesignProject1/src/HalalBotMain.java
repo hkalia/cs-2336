@@ -1,6 +1,6 @@
-public class MyBotMain {
+public class HalalBotMain {
     public static void main(String[] args) throws Exception{
-        MyBot bot = new MyBot();
+        HalalBot bot = new HalalBot();
 
         bot.setVerbose(true);
         bot.connect("irc.freenode.net");

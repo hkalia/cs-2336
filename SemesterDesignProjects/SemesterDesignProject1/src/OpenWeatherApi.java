@@ -1,22 +1,14 @@
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.io.IOException;
 import java.net.URL;
 
-public class OpenWeatherApi {
-    public static String root = "http://api.openweathermap.org/data/2.5/weather?q=";
-    public static String token = "&APPID=370be09443bced97836456dddbb484c6";
+// wrapper class around Open Weather Map API
+class OpenWeatherApi {
+    private static String root = "http://api.openweathermap.org/data/2.5/weather?";
+    private static String token = "&appid=370be09443bced97836456dddbb484c6";
 
-    public static JsonObject getWeatherAtLocation(String location) throws Exception {
-        URL url = new URL(root + location + token);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-        con.setRequestMethod("GET");
-        con.setRequestProperty("Accept", "application/json");
-        String res = ApiUtility.bufferToString(new BufferedReader(new InputStreamReader(con.getInputStream())));
-        return new JsonParser().parse(res).getAsJsonObject();
+    static JsonObject getWeatherAtZipCode(String zipCode) throws IOException {
+        return ApiUtility.getJson(new URL(root + "zip=" + zipCode.trim() + "&units=imperial" + token));
     }
 }
