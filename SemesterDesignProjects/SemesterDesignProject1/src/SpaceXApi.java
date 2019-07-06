@@ -10,4 +10,16 @@ class SpaceXApi {
     static JsonObject getLatestLaunch() throws IOException {
         return ApiUtility.getJson(new URL(root + "/launches/latest"));
     }
+
+    static JsonObject getLaunchByFlightNum(String flightNumber) throws IOException {
+        return ApiUtility.getJson(new URL(root + "/launches/" + flightNumber));
+    }
+
+    static JsonObject getRocketById(String rocketId) throws IOException {
+        return ApiUtility.getJson(new URL(root + "/rockets/" + rocketId));
+    }
+
+    static JsonObject getCompanyInfo() throws IOException {
+        return ApiUtility.getJson(new URL(root + "/info"));
+    }
 }
