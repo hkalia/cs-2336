@@ -1,291 +1,273 @@
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 public class Calculator {
-    private StringBuilder currentExpression = new StringBuilder();
-    private StringBuilder fullExpression = new StringBuilder();
-    private ScriptEngineManager manager = new ScriptEngineManager();
-    private ScriptEngine engine = manager.getEngineByName("JavaScript");
-    private boolean result = false;
+    private JPanel rootPanel = new JPanel(new GridBagLayout(), true);
 
-    private JPanel rootPanel;
-    private JButton a6Button;
-    private JButton a3Button;
-    private JButton a9Button;
-    private JButton a5Button;
-    private JButton a8Button;
-    private JButton a2Button;
-    private JButton a4Button;
-    private JButton a7Button;
-    private JButton a1Button;
-    private JButton a0Button;
-    private JLabel expressionLabel;
-    private JButton dButton;
-    private JButton cButton;
-    private JButton ceButton;
-    private JButton divButton;
-    private JButton mulButton;
-    private JButton subButton;
-    private JButton addButton;
-    private JButton equalButton;
-    private JButton pointButton;
-    private JButton negButton;
+    private JButton hamburgerMenu = new JButton("M");
+    private JLabel programmer = new JLabel("Programmer");
+    private JLabel expressionLabel = new JLabel("0");
+    private JLabel hex = new JLabel("HEX");
+    private JLabel hexLabel = new JLabel("0");
+    private JLabel dec = new JLabel("DEC");
+    private JLabel decLabel = new JLabel("0");
+    private JLabel bin = new JLabel("BIN");
+    private JLabel binLabel = new JLabel("0");
+    private JButton upArrow = new JButton("↑");
+    private JButton mod = new JButton("Mod");
+    private JButton keyCE = new JButton("CE");
+    private JButton keyClear = new JButton("C");
+    private JButton delete = new JButton("⌫");
+    private JButton div = new JButton("÷");
+    private JButton keyA = new JButton("A");
+    private JButton keyB = new JButton("B");
+    private JButton key7 = new JButton("7");
+    private JButton key8 = new JButton("8");
+    private JButton key9 = new JButton("9");
+    private JButton mul = new JButton("✕");
+    private JButton keyC = new JButton("C");
+    private JButton keyD = new JButton("D");
+    private JButton key4 = new JButton("4");
+    private JButton key5 = new JButton("5");
+    private JButton key6 = new JButton("6");
+    private JButton sub = new JButton("-");
+    private JButton keyE = new JButton("E");
+    private JButton keyF = new JButton("F");
+    private JButton key1 = new JButton("1");
+    private JButton key2 = new JButton("2");
+    private JButton key3 = new JButton("3");
+    private JButton add = new JButton("+");
+    private JButton openParen = new JButton("(");
+    private JButton closeParen = new JButton(")");
+    private JButton neg = new JButton("±");
+    private JButton key0 = new JButton("0");
+    private JButton point = new JButton(".");
+    private JButton equal = new JButton("=");
 
-    public Calculator() {
+    private JButton[] padButtons = new JButton[]{upArrow, mod, keyCE, keyClear, delete, div, keyA, keyB, key7, key8, key9, mul, keyC, keyD, key4, key5, key6, sub, keyE, keyF, key1, key2, key3, add, openParen, closeParen, neg, key0, point, equal};
+    private JButton[] valueKeys = new JButton[]{key0, key1, key2, key3, key4, key5, key6, key7, key8, key9, keyA, keyB, keyC, keyD, keyE, keyF};
+    private JButton[] numKeys = new JButton[]{key0, key1, key2, key3, key4, key5, key6, key7, key8, key9};
+    private JButton[] letterKeys = new JButton[]{keyA, keyB, keyC, keyD, keyE, keyF};
+    private JButton[] otherKeys = new JButton[]{upArrow, mod, keyCE, keyClear, delete, div, mul, sub, add, openParen, closeParen, neg, point, equal};
+
+    private StringBuilder currentNumber = new StringBuilder();
+    private ArrayList<String> fullExpression = new ArrayList<String>();
+    private long currentResult = 0;
+    private boolean resultWasLast = false;
+
+    private String listToString(ArrayList<String> list) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : list) {
+            sb.append(s);
+            sb.append(" ");
+        }
+        return sb.toString();
+    }
+
+    private Calculator() {
+        setupUI();
         ActionListener keyPadListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                System.out.println(fullExpression.toString());
                 Object src = event.getSource();
-                if (result) {
-                    currentExpression.setLength(0);
-                    fullExpression.setLength(0);
-                    result = false;
+                if (resultWasLast) {
+                    resultWasLast = false;
+                    currentNumber.setLength(0);
+                    fullExpression.clear();
+                    expressionLabel.setText("0");
                 }
-                if (src == a0Button) currentExpression.append("0");
-                else if (src == a1Button) currentExpression.append("1");
-                else if (src == a2Button) currentExpression.append("2");
-                else if (src == a3Button) currentExpression.append("3");
-                else if (src == a4Button) currentExpression.append("4");
-                else if (src == a5Button) currentExpression.append("5");
-                else if (src == a6Button) currentExpression.append("6");
-                else if (src == a7Button) currentExpression.append("7");
-                else if (src == a8Button) currentExpression.append("8");
-                else if (src == a9Button) currentExpression.append("9");
-                else if (src == dButton) {
-                    if (currentExpression.length() > 0) {
-                        currentExpression.setLength(currentExpression.length() - 1);
+                if (src == mod) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
-                } else if (src == cButton) {
-                    currentExpression.setLength(0);
-                    fullExpression.setLength(0);
-                } else if (src == ceButton) currentExpression.setLength(0);
-                else if (src == addButton) {
-                    if (currentExpression.length() > 0) {
-                        fullExpression.append(currentExpression);
-                        fullExpression.append("+");
-                        currentExpression.setLength(0);
+                    fullExpression.add("%");
+                } else if (src == keyCE) {
+                } else if (src == keyClear) {
+                    currentNumber.setLength(0);
+                    fullExpression.clear();
+                    expressionLabel.setText("0");
+                    return;
+                } else if (src == delete) {
+                } else if (src == div) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
-                } else if (src == subButton) {
-                    if (currentExpression.length() > 0) {
-                        fullExpression.append(currentExpression);
-                        fullExpression.append("-");
-                        currentExpression.setLength(0);
+                    fullExpression.add("/");
+                } else if (src == keyA) currentNumber.append("A");
+                else if (src == keyB) currentNumber.append("B");
+                else if (src == key7) currentNumber.append("7");
+                else if (src == key8) currentNumber.append("8");
+                else if (src == key9) currentNumber.append("9");
+                else if (src == mul) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
-                } else if (src == mulButton) {
-                    if (currentExpression.length() > 0) {
-                        fullExpression.append(currentExpression);
-                        fullExpression.append("*");
-                        currentExpression.setLength(0);
+                    fullExpression.add("*");
+                } else if (src == keyC) currentNumber.append("C");
+                else if (src == keyD) currentNumber.append("D");
+                else if (src == key4) currentNumber.append("4");
+                else if (src == key5) currentNumber.append("5");
+                else if (src == key6) currentNumber.append("6");
+                else if (src == sub) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
-                } else if (src == divButton) {
-                    if (currentExpression.length() > 0) {
-                        fullExpression.append(currentExpression);
-                        fullExpression.append("/");
-                        currentExpression.setLength(0);
+                    fullExpression.add("-");
+                } else if (src == keyE) currentNumber.append("E");
+                else if (src == keyF) currentNumber.append("F");
+                else if (src == key1) currentNumber.append("1");
+                else if (src == key2) currentNumber.append("2");
+                else if (src == key3) currentNumber.append("3");
+                else if (src == add) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
-                } else if (src == equalButton) {
-                    if (currentExpression.length() > 0) {
-                        fullExpression.append(currentExpression);
-                        currentExpression.setLength(0);
-                        try {
-                            currentExpression.append(engine.eval(fullExpression.toString()));
-                            result = true;
-                        } catch (ScriptException e) {
-                            e.getStackTrace();
-                            currentExpression.append("error");
-                        }
+                    fullExpression.add("+");
+                } else if (src == openParen) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
                     }
+                    fullExpression.add("(");
+                } else if (src == closeParen) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
+                    }
+                    fullExpression.add(")");
+                } else if (src == neg) {
+                    if (currentNumber.charAt(0) == '-') currentNumber.deleteCharAt(0);
+                    else currentNumber.insert(0, "-");
+                } else if (src == key0) {
+                    if (!(currentNumber.length() == 1 && currentNumber.charAt(0) == '0')) {
+                        currentNumber.append("0");
+                    }
+                } else if (src == equal) {
+                    if (currentNumber.length() > 0) {
+                        fullExpression.add(currentNumber.toString());
+                        currentNumber.setLength(0);
+                    }
+                    getResult();
+                    resultWasLast = true;
                 }
-                expressionLabel.setText(currentExpression.toString());
+                expressionLabel.setText(currentNumber.length() == 0 ? "0" : currentNumber.toString());
+                System.out.println(listToString(fullExpression));
             }
         };
-        a0Button.addActionListener(keyPadListener);
-        a1Button.addActionListener(keyPadListener);
-        a2Button.addActionListener(keyPadListener);
-        a3Button.addActionListener(keyPadListener);
-        a4Button.addActionListener(keyPadListener);
-        a5Button.addActionListener(keyPadListener);
-        a6Button.addActionListener(keyPadListener);
-        a7Button.addActionListener(keyPadListener);
-        a8Button.addActionListener(keyPadListener);
-        a9Button.addActionListener(keyPadListener);
-        dButton.addActionListener(keyPadListener);
-        cButton.addActionListener(keyPadListener);
-        ceButton.addActionListener(keyPadListener);
-        addButton.addActionListener(keyPadListener);
-        subButton.addActionListener(keyPadListener);
-        mulButton.addActionListener(keyPadListener);
-        divButton.addActionListener(keyPadListener);
-        equalButton.addActionListener(keyPadListener);
+        for (JButton padButton : padButtons) {
+            padButton.addActionListener(keyPadListener);
+        }
     }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Calculator");
-        frame.setContentPane(new Calculator().rootPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+    private void getResult() {
+        /* maps operators to their precedence value */
+        final Map<String, Integer> operatorPrecedence = new HashMap<String, Integer>() {{
+            put("*", 1);
+            put("/", 1);
+            put("%", 1);
+            put("+", 0);
+            put("-", 0);
+        }};
+        ArrayList<String> outputQueue = new ArrayList<String>();
+        Stack<Double> outputStack = new Stack<Double>();
+        Stack<String> operatorStack = new Stack<String>();
+
+        for (String token : fullExpression) {
+            if (token.matches("^-?\\d+(\\d+)?$")) {
+                outputQueue.add(token);
+            } else if (token.matches("^[%/*\\-+]$")) {
+                while (!operatorStack.empty()
+                        && operatorStack.peek().matches("^[%/*\\-+]$")
+                        && operatorPrecedence.get(operatorStack.peek()) >= operatorPrecedence.get(token)
+                        && !operatorStack.peek().equals("(")) {
+                    outputQueue.add(operatorStack.pop());
+                }
+                operatorStack.push(token);
+            } else if (token.equals("(")) {
+                operatorStack.push(token);
+            } else if (token.equals(")")) {
+                while (!operatorStack.empty() &&
+                        !operatorStack.peek().equals("(")) {
+                    outputQueue.add(operatorStack.pop());
+                }
+                if (operatorStack.peek().equals("(")) {
+                    operatorStack.pop();
+                }
+            }
+        }
+        while (!operatorStack.empty()) {
+            outputQueue.add(operatorStack.pop());
+        }
+        Double operand1;
+        Double operand2;
+        for (String token : outputQueue) {
+            if (token.equals("%")) {
+                operand1 = outputStack.pop();
+                operand2 = outputStack.pop();
+                outputStack.push(operand2 % operand1);
+            } else if (token.equals("/")) {
+                operand1 = outputStack.pop();
+                operand2 = outputStack.pop();
+                outputStack.push(operand2 / operand1);
+            } else if (token.equals("*")) {
+                operand1 = outputStack.pop();
+                operand2 = outputStack.pop();
+                outputStack.push(operand2 * operand1);
+            } else if (token.equals("-")) {
+                operand1 = outputStack.pop();
+                operand2 = outputStack.pop();
+                outputStack.push(operand2 - operand1);
+            } else if (token.equals("+")) {
+                operand1 = outputStack.pop();
+                operand2 = outputStack.pop();
+                outputStack.push(operand2 + operand1);
+            } else if (token.matches("^-?\\d+(\\d+)?$")) {
+                outputStack.push(Double.parseDouble(token));
+            }
+        }
     }
 
-    {
-// GUI initializer generated by IntelliJ IDEA GUI Designer
-// >>> IMPORTANT!! <<<
-// DO NOT EDIT OR ADD ANY CODE HERE!
-        $$$setupUI$$$();
+    private void setFonts(Font font) {
     }
 
-    /**
-     * Method generated by IntelliJ IDEA GUI Designer
-     * >>> IMPORTANT!! <<<
-     * DO NOT edit this method OR call it in your code!
-     *
-     * @noinspection ALL
-     */
-    private void $$$setupUI$$$() {
-        rootPanel = new JPanel();
-        rootPanel.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(6, 4, new Insets(0, 0, 0, 0), -1, -1));
+    private void setupUI() {
         rootPanel.setBackground(new Color(-1644826));
-        a6Button = new JButton();
-        a6Button.setBackground(new Color(-328966));
-        Font a6ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a6Button.getFont());
-        if (a6ButtonFont != null) a6Button.setFont(a6ButtonFont);
-        a6Button.setText("6");
-        rootPanel.add(a6Button, new com.intellij.uiDesigner.core.GridConstraints(3, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a3Button = new JButton();
-        a3Button.setBackground(new Color(-328966));
-        Font a3ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a3Button.getFont());
-        if (a3ButtonFont != null) a3Button.setFont(a3ButtonFont);
-        a3Button.setText("3");
-        rootPanel.add(a3Button, new com.intellij.uiDesigner.core.GridConstraints(4, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a9Button = new JButton();
-        a9Button.setBackground(new Color(-328966));
-        Font a9ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a9Button.getFont());
-        if (a9ButtonFont != null) a9Button.setFont(a9ButtonFont);
-        a9Button.setText("9");
-        rootPanel.add(a9Button, new com.intellij.uiDesigner.core.GridConstraints(2, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a5Button = new JButton();
-        a5Button.setBackground(new Color(-328966));
-        Font a5ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a5Button.getFont());
-        if (a5ButtonFont != null) a5Button.setFont(a5ButtonFont);
-        a5Button.setText("5");
-        rootPanel.add(a5Button, new com.intellij.uiDesigner.core.GridConstraints(3, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a8Button = new JButton();
-        a8Button.setBackground(new Color(-328966));
-        Font a8ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a8Button.getFont());
-        if (a8ButtonFont != null) a8Button.setFont(a8ButtonFont);
-        a8Button.setText("8");
-        rootPanel.add(a8Button, new com.intellij.uiDesigner.core.GridConstraints(2, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a2Button = new JButton();
-        a2Button.setBackground(new Color(-328966));
-        Font a2ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a2Button.getFont());
-        if (a2ButtonFont != null) a2Button.setFont(a2ButtonFont);
-        a2Button.setText("2");
-        rootPanel.add(a2Button, new com.intellij.uiDesigner.core.GridConstraints(4, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a4Button = new JButton();
-        a4Button.setBackground(new Color(-328966));
-        Font a4ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a4Button.getFont());
-        if (a4ButtonFont != null) a4Button.setFont(a4ButtonFont);
-        a4Button.setText("4");
-        rootPanel.add(a4Button, new com.intellij.uiDesigner.core.GridConstraints(3, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a7Button = new JButton();
-        a7Button.setBackground(new Color(-328966));
-        Font a7ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a7Button.getFont());
-        if (a7ButtonFont != null) a7Button.setFont(a7ButtonFont);
-        a7Button.setText("7");
-        rootPanel.add(a7Button, new com.intellij.uiDesigner.core.GridConstraints(2, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a1Button = new JButton();
-        a1Button.setBackground(new Color(-328966));
-        Font a1ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a1Button.getFont());
-        if (a1ButtonFont != null) a1Button.setFont(a1ButtonFont);
-        a1Button.setText("1");
-        rootPanel.add(a1Button, new com.intellij.uiDesigner.core.GridConstraints(4, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        a0Button = new JButton();
-        a0Button.setBackground(new Color(-328966));
-        Font a0ButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, a0Button.getFont());
-        if (a0ButtonFont != null) a0Button.setFont(a0ButtonFont);
-        a0Button.setText("0");
-        rootPanel.add(a0Button, new com.intellij.uiDesigner.core.GridConstraints(5, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        dButton = new JButton();
-        dButton.setBackground(new Color(-328966));
-        Font dButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, dButton.getFont());
-        if (dButtonFont != null) dButton.setFont(dButtonFont);
-        dButton.setText("D");
-        rootPanel.add(dButton, new com.intellij.uiDesigner.core.GridConstraints(1, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        cButton = new JButton();
-        cButton.setBackground(new Color(-328966));
-        Font cButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, cButton.getFont());
-        if (cButtonFont != null) cButton.setFont(cButtonFont);
-        cButton.setText("C");
-        rootPanel.add(cButton, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        ceButton = new JButton();
-        ceButton.setBackground(new Color(-328966));
-        Font ceButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, ceButton.getFont());
-        if (ceButtonFont != null) ceButton.setFont(ceButtonFont);
-        ceButton.setText("CE");
-        rootPanel.add(ceButton, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        divButton = new JButton();
-        divButton.setBackground(new Color(-328966));
-        Font divButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, divButton.getFont());
-        if (divButtonFont != null) divButton.setFont(divButtonFont);
-        divButton.setText("÷");
-        rootPanel.add(divButton, new com.intellij.uiDesigner.core.GridConstraints(1, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        mulButton = new JButton();
-        mulButton.setBackground(new Color(-328966));
-        Font mulButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, mulButton.getFont());
-        if (mulButtonFont != null) mulButton.setFont(mulButtonFont);
-        mulButton.setText("×");
-        rootPanel.add(mulButton, new com.intellij.uiDesigner.core.GridConstraints(2, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        subButton = new JButton();
-        subButton.setBackground(new Color(-328966));
-        Font subButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, subButton.getFont());
-        if (subButtonFont != null) subButton.setFont(subButtonFont);
-        subButton.setText("-");
-        rootPanel.add(subButton, new com.intellij.uiDesigner.core.GridConstraints(3, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        addButton = new JButton();
-        addButton.setBackground(new Color(-328966));
-        Font addButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, addButton.getFont());
-        if (addButtonFont != null) addButton.setFont(addButtonFont);
-        addButton.setText("+");
-        rootPanel.add(addButton, new com.intellij.uiDesigner.core.GridConstraints(4, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        equalButton = new JButton();
-        equalButton.setBackground(new Color(-328966));
-        Font equalButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, equalButton.getFont());
-        if (equalButtonFont != null) equalButton.setFont(equalButtonFont);
-        equalButton.setText("=");
-        rootPanel.add(equalButton, new com.intellij.uiDesigner.core.GridConstraints(5, 3, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        pointButton = new JButton();
-        pointButton.setBackground(new Color(-328966));
-        pointButton.setEnabled(false);
-        Font pointButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, pointButton.getFont());
-        if (pointButtonFont != null) pointButton.setFont(pointButtonFont);
-        pointButton.setText(".");
-        rootPanel.add(pointButton, new com.intellij.uiDesigner.core.GridConstraints(5, 2, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        negButton = new JButton();
-        negButton.setBackground(new Color(-328966));
-        Font negButtonFont = this.$$$getFont$$$("Segoe UI", Font.PLAIN, 14, negButton.getFont());
-        if (negButtonFont != null) negButton.setFont(negButtonFont);
-        negButton.setText("±");
-        rootPanel.add(negButton, new com.intellij.uiDesigner.core.GridConstraints(5, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        final JPanel panel1 = new JPanel();
-        panel1.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        rootPanel.add(panel1, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 4, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        expressionLabel = new JLabel();
-        Font expressionLabelFont = this.$$$getFont$$$("Segoe UI Black", Font.PLAIN, 20, expressionLabel.getFont());
-        if (expressionLabelFont != null) expressionLabel.setFont(expressionLabelFont);
-        expressionLabel.setText("0");
-        panel1.add(expressionLabel, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        Color buttonBackground = new Color(-328966);
+//      Font font = getFont("Segoe UI", Font.PLAIN, 14, a6Button.getFont());
+        for (JButton padButton : padButtons) {
+            padButton.setBackground(buttonBackground);
+        }
+        rootPanel.add(hamburgerMenu, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(programmer, new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(expressionLabel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hex, new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hexLabel, new GridBagConstraints(1, 2, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(dec, new GridBagConstraints(0, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(decLabel, new GridBagConstraints(1, 3, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(bin, new GridBagConstraints(0, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(binLabel, new GridBagConstraints(1, 4, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        for (int i = 0; i < padButtons.length; i++) {
+            rootPanel.add(padButtons[i], new GridBagConstraints((i % 6), (i / 6) + 5, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        }
+        for (JButton letterKey : letterKeys) {
+            letterKey.setEnabled(false);
+        }
+        hamburgerMenu.setEnabled(false);
+        point.setEnabled(false);
     }
 
-    /**
-     * @noinspection ALL
-     */
-    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+    private Font getFont(String fontName, int style, int size, Font currentFont) {
         if (currentFont == null) return null;
         String resultName;
         if (fontName == null) {
@@ -302,10 +284,30 @@ public class Calculator {
     }
 
     /**
-     * @noinspection ALL
+     * Create the GUI and show it.  For thread safety,
+     * this method should be invoked from the
+     * event-dispatching thread.
      */
-    public JComponent $$$getRootComponent$$$() {
-        return rootPanel;
+    private static void createAndShowGUI() {
+        //Create and set up the window.
+        JFrame frame = new JFrame("Calculator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //Set up the content pane.
+        frame.setContentPane(new Calculator().rootPanel);
+
+        //Display the window.
+        frame.pack();
+        frame.setVisible(true);
     }
 
+    public static void main(String[] args) {
+        //Schedule a job for the event-dispatching thread:
+        //creating and showing this application's GUI.
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
+    }
 }
