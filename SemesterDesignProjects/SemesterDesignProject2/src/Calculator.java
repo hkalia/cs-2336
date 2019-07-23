@@ -1,23 +1,22 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
 
 public class Calculator {
-    private JPanel rootPanel = new JPanel(new GridBagLayout(), true);
+    private Color mainBackground = new Color(242, 242, 242);
 
     private JButton hamburgerMenu = new JButton("M");
     private JLabel programmer = new JLabel("Programmer");
-    private JLabel expressionLabel = new JLabel("0");
-    private JLabel hex = new JLabel("HEX");
+    private Color buttonBackground = new Color(230, 230, 230);
+    //<editor-fold desc="UI Elements">
+    private JPanel rootPanel = new JPanel(new GridBagLayout(), true);
+    private JLabel fullExpressionLabel = new JLabel("", SwingConstants.RIGHT);
     private JLabel hexLabel = new JLabel("0");
-    private JLabel dec = new JLabel("DEC");
+    private JLabel expressionLabel = new JLabel("0", SwingConstants.RIGHT);
     private JLabel decLabel = new JLabel("0");
-    private JLabel bin = new JLabel("BIN");
+    private JButton hex = new JButton("HEX");
     private JLabel binLabel = new JLabel("0");
     private JButton upArrow = new JButton("↑");
     private JButton mod = new JButton("Mod");
@@ -49,17 +48,232 @@ public class Calculator {
     private JButton key0 = new JButton("0");
     private JButton point = new JButton(".");
     private JButton equal = new JButton("=");
-
+    private JButton dec = new JButton("DEC");
+    private JButton bin = new JButton("BIN");
+    //</editor-fold>
+    //<editor-fold desc="UI Element Groups">
+    private JButton[] allButtons = new JButton[]{hamburgerMenu, hex, dec, bin, upArrow, mod, keyCE, keyClear, delete, div, keyA, keyB, key7, key8, key9, mul, keyC, keyD, key4, key5, key6, sub, keyE, keyF, key1, key2, key3, add, openParen, closeParen, neg, key0, point, equal};
     private JButton[] padButtons = new JButton[]{upArrow, mod, keyCE, keyClear, delete, div, keyA, keyB, key7, key8, key9, mul, keyC, keyD, key4, key5, key6, sub, keyE, keyF, key1, key2, key3, add, openParen, closeParen, neg, key0, point, equal};
     private JButton[] valueKeys = new JButton[]{key0, key1, key2, key3, key4, key5, key6, key7, key8, key9, keyA, keyB, keyC, keyD, keyE, keyF};
     private JButton[] numKeys = new JButton[]{key0, key1, key2, key3, key4, key5, key6, key7, key8, key9};
     private JButton[] letterKeys = new JButton[]{keyA, keyB, keyC, keyD, keyE, keyF};
-    private JButton[] otherKeys = new JButton[]{upArrow, mod, keyCE, keyClear, delete, div, mul, sub, add, openParen, closeParen, neg, point, equal};
-
-    private StringBuilder currentNumber = new StringBuilder();
+    private JButton[] operatorKeys = new JButton[]{mod, div, mul, sub, add, openParen, closeParen, equal};
+    private JButton[] otherKeys = new JButton[]{keyCE, keyClear, delete, neg};
+    //</editor-fold>
+    private Base mode = Base.DECIMAL;
+    private StringBuilder currentExpression = new StringBuilder();
+    private double currentResult = 0;
     private ArrayList<String> fullExpression = new ArrayList<String>();
-    private long currentResult = 0;
-    private boolean resultWasLast = false;
+    // flag any clearing that needs to happen on next button press
+    private boolean needFullClear = false;
+    private boolean needClear = false;
+    private int parenCounter = 0;
+
+    private Calculator() {
+        setupUI();
+
+        ActionListener valueKeysListener = event -> {
+            JButton src = (JButton) event.getSource();
+            checkClears();
+            if (src == key0) {
+                if (!(currentExpression.length() == 1 && currentExpression.charAt(0) == '0')) {
+                    currentExpression.append("0");
+                }
+            } else {
+                currentExpression.append(src.getText());
+            }
+            setLabels();
+        };
+        for (JButton valueKey : valueKeys) valueKey.addActionListener(valueKeysListener);
+
+        ActionListener operatorKeysListener = event -> {
+            Object src = event.getSource();
+            checkClears();
+            if (currentExpression.length() < 0) {
+                return;
+            }
+            try {
+                fullExpression.add(Long.toString(Long.parseLong(currentExpression.toString(), mode.getValue())));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+            currentExpression.setLength(0);
+            if (src == mod) fullExpression.add("%");
+            else if (src == div) fullExpression.add("/");
+            else if (src == mul) fullExpression.add("*");
+            else if (src == sub) fullExpression.add("-");
+            else if (src == add) fullExpression.add("+");
+            else if (src == openParen) {
+                fullExpression.add("(");
+                parenCounter++;
+            } else if (src == closeParen) {
+                fullExpression.add(")");
+                parenCounter--;
+            } else if (src == equal) {
+                try {
+                    currentExpression.append(Long.toString(Math.round(EvaluateExpression
+                            .evaluateExpression(fullExpression)), mode.getValue()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    fullExpression.clear();
+                }
+                fullExpression.clear();
+            }
+            setLabels();
+        };
+        for (JButton operatorKey : operatorKeys) operatorKey.addActionListener(operatorKeysListener);
+
+        ActionListener baseChangeListener = event -> {
+            Object src = event.getSource();
+            checkClears();
+            // reset borders
+            hex.setBorder(BorderFactory.createEmptyBorder());
+            dec.setBorder(BorderFactory.createEmptyBorder());
+            bin.setBorder(BorderFactory.createEmptyBorder());
+            if (src == hex) {
+                currentExpression.setLength(0);
+                fullExpression.clear();
+                for (JButton valueKey : valueKeys) {
+                    valueKey.setEnabled(true);
+                }
+                hex.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+                mode = Base.HEX;
+            } else if (src == dec) {
+                currentExpression.setLength(0);
+                fullExpression.clear();
+                for (JButton numKey : numKeys) {
+                    numKey.setEnabled(true);
+                }
+                for (JButton letterKey : letterKeys) {
+                    letterKey.setEnabled(false);
+                }
+                dec.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+                mode = Base.DECIMAL;
+            } else if (src == bin) {
+                currentExpression.setLength(0);
+                fullExpression.clear();
+                for (JButton valueKey : valueKeys) {
+                    valueKey.setEnabled(false);
+                }
+                key0.setEnabled(true);
+                key1.setEnabled(true);
+                bin.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+                mode = Base.BINARY;
+            }
+            setLabels();
+        };
+        hex.addActionListener(baseChangeListener);
+        dec.addActionListener(baseChangeListener);
+        bin.addActionListener(baseChangeListener);
+
+        ActionListener buttonListener = event -> {
+            Object src = event.getSource();
+            checkClears();
+            if (src == keyCE) currentExpression.setLength(0);
+            else if (src == keyClear) {
+                currentExpression.setLength(0);
+                fullExpression.clear();
+            } else if (src == delete) {
+                currentExpression.deleteCharAt(currentExpression.length() - 1);
+            } else if (src == neg) {
+                if (currentExpression.length() > 0 && currentExpression.charAt(0) == '-')
+                    currentExpression.deleteCharAt(0);
+                else currentExpression.insert(0, "-");
+            }
+            setLabels();
+        };
+        for (JButton button : otherKeys) {
+            button.addActionListener(buttonListener);
+        }
+    }
+
+    /**
+     * Create the GUI and show it.  For thread safety,
+     * this method should be invoked from the
+     * event-dispatching thread.
+     */
+    private static void createAndShowGUI() {
+        //Create and set up the window.
+        JFrame frame = new JFrame("Calculator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //Set up the content pane.
+        frame.setContentPane(new Calculator().rootPanel);
+
+        // get the screen size as a java dimension
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        // get 2/3 of the height, and 1/3 of the width
+        int height = screenSize.height * 2 / 3;
+        int width = screenSize.width / 3;
+
+        // set the frame height and width
+        frame.setSize(new Dimension(width, height));
+
+        //Display the window.
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        //Schedule a job for the event-dispatching thread:
+        //creating and showing this application's GUI.
+        javax.swing.SwingUtilities.invokeLater(Calculator::createAndShowGUI);
+    }
+
+    private void checkClears() {
+        if (needFullClear) {
+            needFullClear = false;
+            currentExpression.setLength(0);
+            fullExpression.clear();
+        }
+        if (needClear) {
+            needClear = false;
+            currentExpression.setLength(0);
+        }
+    }
+
+    private void setLabels() {
+        fullExpressionLabel.setText(listToString(fullExpression));
+        if (currentExpression.length() == 0) {
+            decLabel.setText("0");
+            hexLabel.setText("0");
+            binLabel.setText("0");
+            expressionLabel.setText("0");
+            return;
+        }
+        decLabel.setText(Long.toString(Long.parseLong(currentExpression.toString(), mode.getValue())));
+        hexLabel.setText(splitStringAtN(
+                Long.toHexString(Long.parseLong(currentExpression.toString(), mode.getValue())), 2));
+        binLabel.setText("<html>"
+                + splitStringAtN(
+                Long.toBinaryString(Long.parseLong(currentExpression.toString(), mode.getValue())), 4)
+                + "</html>");
+        switch (mode) {
+            case DECIMAL:
+                expressionLabel.setText(decLabel.getText());
+                break;
+            case HEX:
+                expressionLabel.setText(hexLabel.getText());
+                break;
+            case BINARY:
+                expressionLabel.setText(binLabel.getText());
+                break;
+        }
+    }
+
+    private String splitStringAtN(String s, int n) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            if (i != 0 && (s.length() - i) % n == 0)
+                sb.append(" ");
+            sb.append(s.charAt(i));
+        }
+        return sb.toString();
+    }
+
+    private void setFonts(Font font) {
+    }
 
     private String listToString(ArrayList<String> list) {
         StringBuilder sb = new StringBuilder();
@@ -68,203 +282,6 @@ public class Calculator {
             sb.append(" ");
         }
         return sb.toString();
-    }
-
-    private Calculator() {
-        setupUI();
-        ActionListener keyPadListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                Object src = event.getSource();
-                if (resultWasLast) {
-                    resultWasLast = false;
-                    currentNumber.setLength(0);
-                    fullExpression.clear();
-                    expressionLabel.setText("0");
-                }
-                if (src == mod) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("%");
-                } else if (src == keyCE) {
-                } else if (src == keyClear) {
-                    currentNumber.setLength(0);
-                    fullExpression.clear();
-                    expressionLabel.setText("0");
-                    return;
-                } else if (src == delete) {
-                } else if (src == div) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("/");
-                } else if (src == keyA) currentNumber.append("A");
-                else if (src == keyB) currentNumber.append("B");
-                else if (src == key7) currentNumber.append("7");
-                else if (src == key8) currentNumber.append("8");
-                else if (src == key9) currentNumber.append("9");
-                else if (src == mul) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("*");
-                } else if (src == keyC) currentNumber.append("C");
-                else if (src == keyD) currentNumber.append("D");
-                else if (src == key4) currentNumber.append("4");
-                else if (src == key5) currentNumber.append("5");
-                else if (src == key6) currentNumber.append("6");
-                else if (src == sub) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("-");
-                } else if (src == keyE) currentNumber.append("E");
-                else if (src == keyF) currentNumber.append("F");
-                else if (src == key1) currentNumber.append("1");
-                else if (src == key2) currentNumber.append("2");
-                else if (src == key3) currentNumber.append("3");
-                else if (src == add) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("+");
-                } else if (src == openParen) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add("(");
-                } else if (src == closeParen) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    fullExpression.add(")");
-                } else if (src == neg) {
-                    if (currentNumber.charAt(0) == '-') currentNumber.deleteCharAt(0);
-                    else currentNumber.insert(0, "-");
-                } else if (src == key0) {
-                    if (!(currentNumber.length() == 1 && currentNumber.charAt(0) == '0')) {
-                        currentNumber.append("0");
-                    }
-                } else if (src == equal) {
-                    if (currentNumber.length() > 0) {
-                        fullExpression.add(currentNumber.toString());
-                        currentNumber.setLength(0);
-                    }
-                    getResult();
-                    resultWasLast = true;
-                }
-                expressionLabel.setText(currentNumber.length() == 0 ? "0" : currentNumber.toString());
-                System.out.println(listToString(fullExpression));
-            }
-        };
-        for (JButton padButton : padButtons) {
-            padButton.addActionListener(keyPadListener);
-        }
-    }
-
-    private void getResult() {
-        /* maps operators to their precedence value */
-        final Map<String, Integer> operatorPrecedence = new HashMap<String, Integer>() {{
-            put("*", 1);
-            put("/", 1);
-            put("%", 1);
-            put("+", 0);
-            put("-", 0);
-        }};
-        ArrayList<String> outputQueue = new ArrayList<String>();
-        Stack<Double> outputStack = new Stack<Double>();
-        Stack<String> operatorStack = new Stack<String>();
-
-        for (String token : fullExpression) {
-            if (token.matches("^-?\\d+(\\d+)?$")) {
-                outputQueue.add(token);
-            } else if (token.matches("^[%/*\\-+]$")) {
-                while (!operatorStack.empty()
-                        && operatorStack.peek().matches("^[%/*\\-+]$")
-                        && operatorPrecedence.get(operatorStack.peek()) >= operatorPrecedence.get(token)
-                        && !operatorStack.peek().equals("(")) {
-                    outputQueue.add(operatorStack.pop());
-                }
-                operatorStack.push(token);
-            } else if (token.equals("(")) {
-                operatorStack.push(token);
-            } else if (token.equals(")")) {
-                while (!operatorStack.empty() &&
-                        !operatorStack.peek().equals("(")) {
-                    outputQueue.add(operatorStack.pop());
-                }
-                if (operatorStack.peek().equals("(")) {
-                    operatorStack.pop();
-                }
-            }
-        }
-        while (!operatorStack.empty()) {
-            outputQueue.add(operatorStack.pop());
-        }
-        Double operand1;
-        Double operand2;
-        for (String token : outputQueue) {
-            if (token.equals("%")) {
-                operand1 = outputStack.pop();
-                operand2 = outputStack.pop();
-                outputStack.push(operand2 % operand1);
-            } else if (token.equals("/")) {
-                operand1 = outputStack.pop();
-                operand2 = outputStack.pop();
-                outputStack.push(operand2 / operand1);
-            } else if (token.equals("*")) {
-                operand1 = outputStack.pop();
-                operand2 = outputStack.pop();
-                outputStack.push(operand2 * operand1);
-            } else if (token.equals("-")) {
-                operand1 = outputStack.pop();
-                operand2 = outputStack.pop();
-                outputStack.push(operand2 - operand1);
-            } else if (token.equals("+")) {
-                operand1 = outputStack.pop();
-                operand2 = outputStack.pop();
-                outputStack.push(operand2 + operand1);
-            } else if (token.matches("^-?\\d+(\\d+)?$")) {
-                outputStack.push(Double.parseDouble(token));
-            }
-        }
-    }
-
-    private void setFonts(Font font) {
-    }
-
-    private void setupUI() {
-        rootPanel.setBackground(new Color(-1644826));
-        Color buttonBackground = new Color(-328966);
-//      Font font = getFont("Segoe UI", Font.PLAIN, 14, a6Button.getFont());
-        for (JButton padButton : padButtons) {
-            padButton.setBackground(buttonBackground);
-        }
-        rootPanel.add(hamburgerMenu, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(programmer, new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(expressionLabel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(hex, new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(hexLabel, new GridBagConstraints(1, 2, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(dec, new GridBagConstraints(0, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(decLabel, new GridBagConstraints(1, 3, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(bin, new GridBagConstraints(0, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(binLabel, new GridBagConstraints(1, 4, GridBagConstraints.REMAINDER, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        for (int i = 0; i < padButtons.length; i++) {
-            rootPanel.add(padButtons[i], new GridBagConstraints((i % 6), (i / 6) + 5, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        }
-        for (JButton letterKey : letterKeys) {
-            letterKey.setEnabled(false);
-        }
-        hamburgerMenu.setEnabled(false);
-        point.setEnabled(false);
     }
 
     private Font getFont(String fontName, int style, int size, Font currentFont) {
@@ -283,31 +300,58 @@ public class Calculator {
         return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
-    /**
-     * Create the GUI and show it.  For thread safety,
-     * this method should be invoked from the
-     * event-dispatching thread.
-     */
-    private static void createAndShowGUI() {
-        //Create and set up the window.
-        JFrame frame = new JFrame("Calculator");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        //Set up the content pane.
-        frame.setContentPane(new Calculator().rootPanel);
-
-        //Display the window.
-        frame.pack();
-        frame.setVisible(true);
+    private void setupUI() {
+        rootPanel.add(hamburgerMenu, new GridBagConstraints(0, 0, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(programmer, new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(fullExpressionLabel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(expressionLabel, new GridBagConstraints(0, 2, GridBagConstraints.REMAINDER, 1, 0.1, 0.3, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hex, new GridBagConstraints(0, 3, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hexLabel, new GridBagConstraints(1, 3, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(dec, new GridBagConstraints(0, 4, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(decLabel, new GridBagConstraints(1, 4, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(bin, new GridBagConstraints(0, 5, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(binLabel, new GridBagConstraints(1, 5, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        for (int i = 0; i < padButtons.length; i++) {
+            rootPanel.add(padButtons[i], new GridBagConstraints((i % 6), (i / 6) + 6, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        }
+        rootPanel.setBackground(mainBackground);
+//      Font font = getFont("Segoe UI", Font.PLAIN, 14, a6Button.getFont());
+        for (JButton button : allButtons) {
+            button.setBorder(BorderFactory.createEmptyBorder());
+        }
+        for (JButton padButton : padButtons) {
+            padButton.setBackground(buttonBackground);
+            padButton.setOpaque(true);
+        }
+        for (JButton letterKey : letterKeys) {
+            letterKey.setEnabled(false);
+        }
+        hamburgerMenu.setEnabled(false);
+        hamburgerMenu.setBackground(mainBackground);
+        expressionLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        hexLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        decLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        binLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        hex.setBackground(mainBackground);
+        dec.setBackground(mainBackground);
+        bin.setBackground(mainBackground);
+        dec.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        upArrow.setEnabled(false);
+        point.setEnabled(false);
     }
 
-    public static void main(String[] args) {
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
+    private enum Base {
+        DECIMAL(10), HEX(16), BINARY(2);
+
+        private int value;
+
+        Base(int value) {
+            this.value = value;
+        }
+
+        int getValue() {
+            return value;
+        }
     }
 }
+
