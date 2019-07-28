@@ -32,6 +32,8 @@ public class HalalBot extends PircBot {
                 weatherMessage(channel, sender, tokens);
             else if (tokens[1].equals("spacex"))
                 spaceXMessage(channel, sender, tokens);
+            else if (tokens[1].equals("rainbow"))
+                respond(channel, sender, "\u000304,01R\u000307A\u000308I\u000303N\u000311B\u000312O\u000313W\u0003");
             else
                 respond(channel, sender, "Command not found. Try \u0002hb help\u0002");
         }
