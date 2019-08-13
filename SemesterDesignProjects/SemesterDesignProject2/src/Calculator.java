@@ -2,16 +2,17 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class Calculator {
-    private Color mainBackground = new Color(242, 242, 242);
+class Calculator {
+
+    //<editor-fold desc="UI Elements">
+    private JPanel rootPanel = new JPanel(new GridBagLayout(), true);
 
     private JButton hamburgerMenu = new JButton("M");
     private JLabel programmer = new JLabel("Programmer");
-    private Color buttonBackground = new Color(230, 230, 230);
-    //<editor-fold desc="UI Elements">
-    private JPanel rootPanel = new JPanel(new GridBagLayout(), true);
     private JLabel fullExpressionLabel = new JLabel("", SwingConstants.RIGHT);
     private JLabel hexLabel = new JLabel("0");
     private JLabel expressionLabel = new JLabel("0", SwingConstants.RIGHT);
@@ -51,6 +52,7 @@ public class Calculator {
     private JButton dec = new JButton("DEC");
     private JButton bin = new JButton("BIN");
     //</editor-fold>
+
     //<editor-fold desc="UI Element Groups">
     private JButton[] allButtons = new JButton[]{hamburgerMenu, hex, dec, bin, upArrow, mod, keyCE, keyClear, delete, div, keyA, keyB, key7, key8, key9, mul, keyC, keyD, key4, key5, key6, sub, keyE, keyF, key1, key2, key3, add, openParen, closeParen, neg, key0, point, equal};
     private JButton[] padButtons = new JButton[]{upArrow, mod, keyCE, keyClear, delete, div, keyA, keyB, key7, key8, key9, mul, keyC, keyD, key4, key5, key6, sub, keyE, keyF, key1, key2, key3, add, openParen, closeParen, neg, key0, point, equal};
@@ -60,14 +62,35 @@ public class Calculator {
     private JButton[] operatorKeys = new JButton[]{mod, div, mul, sub, add, openParen, closeParen, equal};
     private JButton[] otherKeys = new JButton[]{keyCE, keyClear, delete, neg};
     //</editor-fold>
+
+    // current base of calculator
+    private enum Base {
+        DECIMAL(10), HEX(16), BINARY(2);
+
+        private int value;
+
+        Base(int value) {
+            this.value = value;
+        }
+
+        int getValue() {
+            return value;
+        }
+    }
     private Base mode = Base.DECIMAL;
+
+    // main vars for manipulating the mathematical expressions
     private StringBuilder currentExpression = new StringBuilder();
     private double currentResult = 0;
     private ArrayList<String> fullExpression = new ArrayList<String>();
+
     // flag any clearing that needs to happen on next button press
     private boolean needFullClear = false;
     private boolean needClear = false;
-    private int parenCounter = 0;
+
+    // main colors
+    private Color mainBackground = new Color(242, 242, 242);
+    private Color buttonBackground = new Color(230, 230, 230);
 
     private Calculator() {
         setupUI();
@@ -89,30 +112,39 @@ public class Calculator {
         ActionListener operatorKeysListener = event -> {
             Object src = event.getSource();
             checkClears();
-            if (currentExpression.length() < 0) {
-                return;
-            }
-            try {
-                fullExpression.add(Long.toString(Long.parseLong(currentExpression.toString(), mode.getValue())));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
+            // add current number to expression
+            if (currentExpression.length() > 0) {
+                try {
+                    fullExpression.add(Long.toString(Long.parseLong(currentExpression.toString(), mode.getValue())));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
             }
             currentExpression.setLength(0);
+            String tmp;
+            try {
+                tmp = Long.toString(Math.round(ExpressionEvaluator
+                        .evaluateExpression(fullExpression)), mode.getValue());
+            } catch (Exception e) {
+                e.printStackTrace();
+                tmp = "";
+            }
+            if (!tmp.equals("") && src != equal) {
+                currentExpression.append(tmp);
+                needClear = true;
+            }
             if (src == mod) fullExpression.add("%");
             else if (src == div) fullExpression.add("/");
             else if (src == mul) fullExpression.add("*");
             else if (src == sub) fullExpression.add("-");
             else if (src == add) fullExpression.add("+");
-            else if (src == openParen) {
-                fullExpression.add("(");
-                parenCounter++;
-            } else if (src == closeParen) {
-                fullExpression.add(")");
-                parenCounter--;
-            } else if (src == equal) {
+            else if (src == openParen) fullExpression.add("(");
+            else if (src == closeParen) fullExpression.add(")");
+            else if (src == equal) {
                 try {
-                    currentExpression.append(Long.toString(Math.round(EvaluateExpression
+                    currentExpression.setLength(0);
+                    currentExpression.append(Long.toString(Math.round(ExpressionEvaluator
                             .evaluateExpression(fullExpression)), mode.getValue()));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -167,7 +199,7 @@ public class Calculator {
         dec.addActionListener(baseChangeListener);
         bin.addActionListener(baseChangeListener);
 
-        ActionListener buttonListener = event -> {
+        ActionListener otherKeysListener = event -> {
             Object src = event.getSource();
             checkClears();
             if (src == keyCE) currentExpression.setLength(0);
@@ -183,9 +215,7 @@ public class Calculator {
             }
             setLabels();
         };
-        for (JButton button : otherKeys) {
-            button.addActionListener(buttonListener);
-        }
+        for (JButton otherKey : otherKeys) otherKey.addActionListener(otherKeysListener);
     }
 
     /**
@@ -193,7 +223,7 @@ public class Calculator {
      * this method should be invoked from the
      * event-dispatching thread.
      */
-    private static void createAndShowGUI() {
+    static void createAndShowGUI() {
         //Create and set up the window.
         JFrame frame = new JFrame("Calculator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -215,10 +245,47 @@ public class Calculator {
         frame.setVisible(true);
     }
 
-    public static void main(String[] args) {
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(Calculator::createAndShowGUI);
+    private void setupUI() {
+        // position elements in grid and set appropriate weights
+        rootPanel.add(hamburgerMenu, new GridBagConstraints(0, 0, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(programmer, new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(fullExpressionLabel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(expressionLabel, new GridBagConstraints(0, 2, GridBagConstraints.REMAINDER, 1, 0.1, 0.3, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hex, new GridBagConstraints(0, 3, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(hexLabel, new GridBagConstraints(1, 3, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(dec, new GridBagConstraints(0, 4, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(decLabel, new GridBagConstraints(1, 4, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(bin, new GridBagConstraints(0, 5, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        rootPanel.add(binLabel, new GridBagConstraints(1, 5, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        for (int i = 0; i < padButtons.length; i++) {
+            rootPanel.add(padButtons[i], new GridBagConstraints((i % 6), (i / 6) + 6, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        }
+        // Adjust style of elements (background, border, padding)
+        for (JButton button : allButtons) {
+            button.setBorder(BorderFactory.createEmptyBorder());
+        }
+        for (JButton padButton : padButtons) {
+            padButton.setBackground(buttonBackground);
+            padButton.setOpaque(true);
+        }
+        rootPanel.setBackground(mainBackground);
+        hamburgerMenu.setBackground(mainBackground);
+        hex.setBackground(mainBackground);
+        dec.setBackground(mainBackground);
+        bin.setBackground(mainBackground);
+
+        expressionLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        fullExpressionLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        hexLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        decLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        binLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+        dec.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+
+        upArrow.setEnabled(false);
+        point.setEnabled(false);
+        for (JButton letterKey : letterKeys) {
+            letterKey.setEnabled(false);
+        }
     }
 
     private void checkClears() {
@@ -272,9 +339,6 @@ public class Calculator {
         return sb.toString();
     }
 
-    private void setFonts(Font font) {
-    }
-
     private String listToString(ArrayList<String> list) {
         StringBuilder sb = new StringBuilder();
         for (String s : list) {
@@ -282,76 +346,6 @@ public class Calculator {
             sb.append(" ");
         }
         return sb.toString();
-    }
-
-    private Font getFont(String fontName, int style, int size, Font currentFont) {
-        if (currentFont == null) return null;
-        String resultName;
-        if (fontName == null) {
-            resultName = currentFont.getName();
-        } else {
-            Font testFont = new Font(fontName, Font.PLAIN, 10);
-            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
-                resultName = fontName;
-            } else {
-                resultName = currentFont.getName();
-            }
-        }
-        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
-    }
-
-    private void setupUI() {
-        rootPanel.add(hamburgerMenu, new GridBagConstraints(0, 0, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(programmer, new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(fullExpressionLabel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(expressionLabel, new GridBagConstraints(0, 2, GridBagConstraints.REMAINDER, 1, 0.1, 0.3, GridBagConstraints.LINE_END, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(hex, new GridBagConstraints(0, 3, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(hexLabel, new GridBagConstraints(1, 3, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(dec, new GridBagConstraints(0, 4, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(decLabel, new GridBagConstraints(1, 4, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(bin, new GridBagConstraints(0, 5, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        rootPanel.add(binLabel, new GridBagConstraints(1, 5, GridBagConstraints.REMAINDER, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        for (int i = 0; i < padButtons.length; i++) {
-            rootPanel.add(padButtons[i], new GridBagConstraints((i % 6), (i / 6) + 6, 1, 1, 0.1, 0.1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-        }
-        rootPanel.setBackground(mainBackground);
-//      Font font = getFont("Segoe UI", Font.PLAIN, 14, a6Button.getFont());
-        for (JButton button : allButtons) {
-            button.setBorder(BorderFactory.createEmptyBorder());
-        }
-        for (JButton padButton : padButtons) {
-            padButton.setBackground(buttonBackground);
-            padButton.setOpaque(true);
-        }
-        for (JButton letterKey : letterKeys) {
-            letterKey.setEnabled(false);
-        }
-        hamburgerMenu.setEnabled(false);
-        hamburgerMenu.setBackground(mainBackground);
-        expressionLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
-        hexLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
-        decLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
-        binLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
-        hex.setBackground(mainBackground);
-        dec.setBackground(mainBackground);
-        bin.setBackground(mainBackground);
-        dec.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        upArrow.setEnabled(false);
-        point.setEnabled(false);
-    }
-
-    private enum Base {
-        DECIMAL(10), HEX(16), BINARY(2);
-
-        private int value;
-
-        Base(int value) {
-            this.value = value;
-        }
-
-        int getValue() {
-            return value;
-        }
     }
 }
 

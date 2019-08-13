@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3543f3e5-e7ad-43c6-974b-fc05a8c9a6c3" name="Default Changelist" comment="">
+    <list default="true" id="3543f3e5-e7ad-43c6-974b-fc05a8c9a6c3" name="Default Changelist" comment="Add easter egg semesterdesignproject1">
+      <change afterPath="$PROJECT_DIR$/../SemesterDesignProject2/src/CalculatorMain.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/HalalBot.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/HalalBot.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SemesterDesignProject2/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../SemesterDesignProject2/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SemesterDesignProject2/src/Calculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SemesterDesignProject2/src/Calculator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SemesterDesignProject2/src/EvaluateExpression.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SemesterDesignProject2/src/ExpressionEvaluator.java" afterDir="false" />
@@ -19,65 +19,7 @@
     <option name="isMigrated" value="true" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/HalalBotMain.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="96">
-              <caret line="6" column="36" selection-start-line="6" selection-start-column="36" selection-end-line="6" selection-end-column="36" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/OpenWeatherApi.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="224">
-              <caret line="17" column="5" selection-start-line="17" selection-start-column="5" selection-end-line="17" selection-end-column="5" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/SpaceXApi.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="18" column="74" selection-start-line="18" selection-start-column="74" selection-end-line="18" selection-end-column="74" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/HalalBot.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="230">
-              <caret line="35" column="53" selection-start-line="35" selection-start-column="53" selection-end-line="35" selection-end-column="53" />
-              <folding>
-                <element signature="method#basicHelpMessage#0;class#HalalBot#0" />
-                <element signature="method#detailedHelpMessage#0;class#HalalBot#0" />
-                <element signature="method#weatherMessage#0;class#HalalBot#0" />
-                <element signature="method#weatherMessageHelper#0;class#HalalBot#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/ApiUtility.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="25" column="19" selection-start-line="25" selection-start-column="19" selection-end-line="25" selection-end-column="19" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
@@ -87,6 +29,7 @@
   <component name="Git.Settings">
     <option name="PREVIOUS_COMMIT_AUTHORS">
       <list>
+        <option value="habibkalia &lt;habibkalia@gmail.com&gt;" />
         <option value="Habib Kalia &lt;habibkalia@gmail.com&gt;" />
       </list>
     </option>
@@ -116,7 +59,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
@@ -134,6 +76,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -194,7 +137,8 @@
       <workItem from="1562182310183" duration="4751000" />
       <workItem from="1562438410766" duration="11017000" />
       <workItem from="1564265611961" duration="402000" />
-      <workItem from="1564348429941" duration="1566000" />
+      <workItem from="1564348429941" duration="1780000" />
+      <workItem from="1564429712352" duration="126000" />
     </task>
     <task id="LOCAL-00001" summary="Creating basic bot&#10;&#10;Create OpenWeatherApi&#10;Create SpaceXApi&#10;Create ApiUtility">
       <created>1562099283433</created>
@@ -224,17 +168,23 @@
       <option name="project" value="LOCAL" />
       <updated>1562456200318</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Add easter egg semesterdesignproject1">
+      <created>1564350584948</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1564350584949</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="26410000" />
+    <option name="totallyTimeSpent" value="26750000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1280" height="777" extended-state="6" />
-    <editor active="true" />
+    <frame x="0" y="23" width="1280" height="777" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15993538" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2092084" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
@@ -242,7 +192,7 @@
       <window_info id="Favorites" order="5" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32846716" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.32846716" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -307,11 +257,13 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
     <MESSAGE value="Creating basic bot&#10;&#10;Create OpenWeatherApi&#10;Create SpaceXApi&#10;Create ApiUtility" />
     <MESSAGE value="Add capabilites to bot&#10;&#10;Rename bot to HalalBot&#10;Add weather zipcode capability&#10;Add spacex latest launch capability" />
     <MESSAGE value="Add Participation 2" />
     <MESSAGE value="Finish Semester Design Project 1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Finish Semester Design Project 1" />
+    <MESSAGE value="Add easter egg semesterdesignproject1" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add easter egg semesterdesignproject1" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -342,16 +294,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/ApiUtility.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="25" column="19" selection-start-line="25" selection-start-column="19" selection-end-line="25" selection-end-column="19" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/SpaceXApi.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="288">
@@ -364,14 +306,31 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/HalalBot.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="35" column="53" selection-start-line="35" selection-start-column="53" selection-end-line="35" selection-end-column="53" />
+        <state relative-caret-position="182">
+          <caret line="32" column="47" lean-forward="true" selection-start-line="32" selection-start-column="47" selection-end-line="32" selection-end-column="47" />
           <folding>
             <element signature="method#basicHelpMessage#0;class#HalalBot#0" />
             <element signature="method#detailedHelpMessage#0;class#HalalBot#0" />
             <element signature="method#weatherMessage#0;class#HalalBot#0" />
             <element signature="method#weatherMessageHelper#0;class#HalalBot#0" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ApiUtility.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="317">
+          <caret line="25" column="19" selection-start-line="25" selection-start-column="19" selection-end-line="25" selection-end-column="19" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../SemesterDesignProject2/src/Calculator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="65" column="61" selection-start-line="65" selection-start-column="61" selection-end-line="65" selection-end-column="61" />
         </state>
       </provider>
     </entry>

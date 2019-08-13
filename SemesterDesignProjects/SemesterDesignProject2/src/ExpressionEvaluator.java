@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.Stack;
 
-class EvaluateExpression {
+class ExpressionEvaluator {
     /**
      * Evaluate an expression
      */
